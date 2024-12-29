@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Pop Game</title>
+    <!-- font links -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> 
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #89CFF0, #FFC0CB);
+            font-family: Arial, sans-serif;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.8), inset 0 -2px 10px rgba(0, 0, 0, 0.3);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 70%);
+        }
+
+        @keyframes floatUp {
+            from {
+                transform: translateY(100vh) scale(1);
+            }
+            to {
+                transform: translateY(-10vh) scale(1.2);
+            }
+        }
+
+        .bubble.paused {
+            animation-play-state: paused !important;
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, #fff, rgba(255, 255, 255, 0));
+            border-radius: 50%;
+            opacity: 0.8;
+            pointer-events: none;
+            animation: sparkleAnim 1s ease-out;
+        }
+
+        @keyframes sparkleAnim {
+            from {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            to {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+
+        .scoreboard {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+        .donate {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            align-items: center;
+        }
+
+        .donate-icon {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .donate-icon:hover {
+            transform: scale(1.2);
+        }
+
+        .donate-icon img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .qr-popup {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            color: #fff;
+        }
+
+        .qr-popup img {
+            width: 100px;
+            margin: 5px autox;
+        }
+
+        .qr-popup p {
+            font-size: 0.8rem;
+            word-break: break-all;
+        }
+
+        .donate-icon:hover .qr-popup {
+            display: block;
+        }
+        .fab{
+    background-image: linear-gradient(90.5deg, rgba(152,45,255,1) 0.7%, rgba(90,241,255,1) 51.5%, rgba(65,239,164,1) 100.6%);
+            background-clip: text;
+            -webkit-background-clip: text; /* For Safari and Chrome */
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+  }
+    </style>
+</head>
+<body>
+    <div class="scoreboard">Score: <span id="score">0</span>
+      <!-- Developer --> 
+      <a href="https://github.com/Akshayadeveloper"><i class="fab fa-github"></i></a>
+      </div>
+    
+    <div class="donate">
+        <!-- BTC -->
+        <div class="donate-icon" id="btc">
+            <img src="Bitcoin.png" alt="BTC">
+            <div class="qr-popup">
+              <!-- <img src="https://www.bitcoinqrcodemaker.com/api/?style=bitcoin&address=YourBitcoinWalletAddress" alt="Bitcoin QR Code">-->
+              <img src="BTCQR.jpg" alt="Bitcoin QR">
+                <p>BTC: <strong>bc1qzsj24zjxqlvu5wr3rs26wmzm0wvqjyc3emc5tl</strong></p>
+            </div>
+        </div>
+        <!-- ETH -->
+        <div class="donate-icon" id="eth">
+            <img src="Etherum.png" alt="ETH">
+            <div class="qr-popup">
+                <img src="OP.jpeg" alt="Ethereum QR Code">
+                <p>ETH: <strong>0xEc175e4bBF9c08757f1500d4065182BcDbc8EfD1</strong></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const colors = ["#FF6F61", "#6B5B95", "#88B04B", "#F7CAC9", "#92A8D1", "#955251", "#B565A7", "#009B77"];
+        const maxBubbles = 15;
+        let score = 0;
+
+        function createBubble() {
+            const bubble = document.createElement("div");
+            bubble.classList.add("bubble");
+            const size = Math.random() * 50 + 30;
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            bubble.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            bubble.style.left = `${Math.random() * 100}vw`;
+            bubble.style.animationDuration = `${Math.random() * 3 + 5}s`;
+            bubble.addEventListener("click", (e) => {
+                createSparkleEffect(e.clientX, e.clientY);
+                bubble.remove();
+                score++;
+                document.getElementById("score").textContent = score;
+            });
+            document.body.appendChild(bubble);
+
+            setTimeout(() => {
+                bubble.remove();
+            }, 8000);
+        }
+
+        function createSparkleEffect(x, y) {
+            for (let i = 0; i < 10; i++) {
+                const sparkle = document.createElement("div");
+                sparkle.classList.add("sparkle");
+                sparkle.style.left = `${x + (Math.random() - 0.5) * 50}px`;
+                sparkle.style.top = `${y + (Math.random() - 0.5) * 50}px`;
+                document.body.appendChild(sparkle);
+
+                setTimeout(() => sparkle.remove(), 1000);
+            }
+        }
+
+        function generateBubbles() {
+            for (let i = 0; i < maxBubbles; i++) {
+                setTimeout(createBubble, i * 500);
+            }
+        }
+
+        generateBubbles();
+        setInterval(generateBubbles, 8000);
+
+        // Pause and resume functionality
+        const btcIcon = document.getElementById("btc");
+        const ethIcon = document.getElementById("eth");
+
+        btcIcon.addEventListener("mouseenter", pauseBubbles);
+        btcIcon.addEventListener("mouseleave", resumeBubbles);
+
+        ethIcon.addEventListener("mouseenter", pauseBubbles);
+
+        function pauseBubbles() {
+            document.querySelectorAll(".bubble").forEach((bubble) => {
+                bubble.classList.add("paused");
+            });
+        }
+
+        function resumeBubbles() {
+            document.querySelectorAll(".bubble").forEach((bubble) => {
+                bubble.classList.remove("paused");
+            });
+        }
+    </script>
+</body>
+</html>
